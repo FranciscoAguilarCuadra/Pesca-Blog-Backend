@@ -38,8 +38,10 @@ pool.on('remove', () => {
 // Verificar conexión al iniciar
 pool.query('SELECT NOW()', (err) => {
   if (err) {
-    logger.error('No se pudo conectar a la base de datos', err)
-    logger.error(`Host: ${process.env.DB_HOST}, DB: ${process.env.DB_NAME}, User: ${process.env.DB_USER}`)
+    logger.error(`No se pudo conectar a la base de datos: ${err.message}`)
+    logger.error(`Código de error: ${err.code}`)
+    logger.error(`Host: ${process.env.DB_HOST}, Port: ${process.env.DB_PORT}, DB: ${process.env.DB_NAME}, User: ${process.env.DB_USER}`)
+    logger.error(`SSL activo: ${JSON.stringify(poolConfig.ssl)}`)
     process.exit(1)
   } else {
     logger.info('Conexión a la base de datos exitosa')
