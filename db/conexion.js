@@ -6,22 +6,23 @@ dotenv.config()
 
 const { Pool } = pg
 
-// Configuración del pool según el entorno
+const isProduction = process.env.NODE_ENV === 'production'
+
 const poolConfig = {
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  // Configuración de producción
-  max: process.env.NODE_ENV === 'production' ? 20 : 5,
+  max: isProduction ? 20 : 5,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // ← subido de 2s a 10s para Render
+  // SSL obligatorio en Render
+  ssl: isProduction ? { rejectUnauthorized: false } : false,
 }
 
 export const pool = new Pool(poolConfig)
 
-// Manejo de errores del pool
 pool.on('error', (err) => {
   logger.error('Error inesperado en el pool de conexiones', err)
 })
@@ -35,9 +36,10 @@ pool.on('remove', () => {
 })
 
 // Verificar conexión al iniciar
-pool.query('SELECT NOW()', (err, res) => {
+pool.query('SELECT NOW()', (err) => {
   if (err) {
     logger.error('No se pudo conectar a la base de datos', err)
+    logger.error(`Host: ${process.env.DB_HOST}, DB: ${process.env.DB_NAME}, User: ${process.env.DB_USER}`)
     process.exit(1)
   } else {
     logger.info('Conexión a la base de datos exitosa')
